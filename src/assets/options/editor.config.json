@@ -16,6 +16,13 @@
 		"bracketPairs": true,
 		"bracketPairsHorizontal": true
 	},
+	"smoothScrolling": true,
+	"scrollbar": {
+		"horizontal": "auto",
+		"vertical": "auto",
+		"horizontalScrollbarSize": 3,
+		"verticalScrollbarSize": 3
+	},
 	"inlayHints": {
 		"enabled": "on",
 		"fontFamily": "'Monaspace Krypton', 'Monaspace Radon', 'Cascadia Code', default"

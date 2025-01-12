@@ -1,37 +1,13 @@
-import {
-	Editor,
-	type EditorProps,
-	type Monaco,
-	type OnChange,
-	type OnMount,
-} from '@monaco-editor/react';
-import { editor } from 'monaco-editor';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
+
+import { Editor, type EditorProps } from '@/components/Editor';
+import { Header } from '@/layout/Header';
+import { ResizableSplitter as Splitter } from '@/layout/ResizableSplitter';
 
 import editorOptions from '@/assets/options/editor.config.json';
 import themelist from '@/assets/themes/editor/themelist.json';
 
 import './App.module.css';
-
-// Import all themes concurrently
-const availableThemes: { [x: string]: editor.IStandaloneThemeData } =
-	Object.fromEntries(
-		await Promise.all(
-			Object.entries(themelist).map(async ([themeName, fileName]) => {
-				const themeData = await import(
-					`@/assets/themes/editor/${fileName}.json`
-				);
-				return [themeName, themeData.default as editor.IStandaloneThemeData];
-			})
-		)
-	);
-
-const EDITOR_LANGUAGES: string[] = [
-	'json',
-	'javascript',
-	'typescript',
-	'html',
-] as const;
 
 export const App = () => {
 	const [value, setValue] = useState<string>(
@@ -47,85 +23,19 @@ export const App = () => {
 			return String(error);
 		}
 	});
-	const [theme, setTheme] = useState('Tomorrow-Night-Eighties');
+	const [theme, setTheme] = useState('vs-dark');
 	const [editorLang, setEditorLang] = useState<string>('javascript');
-	const originalConsole = useRef(console);
-
-	useEffect(() => {
-		const consoleObject = originalConsole.current;
-		const consoleProxy = new Proxy(console, {
-			get:
-				(target, prop: keyof Console) =>
-				(...args: unknown[]) => {
-					if (typeof target[prop] === 'function')
-						setOutput(
-							(prevState) =>
-								`${
-									prevState + '\n'
-								}[${new Date().toISOString()}] [${prop.toUpperCase()}] ` +
-								JSON.stringify(
-									[...args, { type: prop, message: args.join(' ') }],
-									null,
-									2
-								)
-						);
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-					(target[prop] as Function)(...args); // Llamar al método original
-				},
-		});
-
-		// Reemplazar la consola global
-		window.console = consoleProxy;
-
-		// Restaurar la consola original al desmontar
-		return () => {
-			window.console = consoleObject;
-		};
-	}, []);
-
-	const handleEditorMount = useCallback<OnMount>(
-		(_, monaco: Monaco) => {
-			Object.entries(availableThemes).forEach(([themeName, themeData]) => {
-				monaco.editor.defineTheme(themeName, themeData);
-			});
-			monaco.editor.setTheme(theme);
-		},
-		[theme]
-	);
-	const handleEditorChange = useCallback<OnChange>(
-		(newValue) => {
-			setValue(newValue ?? '');
-			try {
-				const result = eval(newValue ?? ''); // Evalúa el código.
-				setOutput((prev) =>
-					typeof result === 'object'
-						? JSON.stringify(result ?? '{}', null, 2)
-						: String(result ?? prev)
-				);
-			} catch (error) {
-				console.error(error);
-				setOutput(
-					String(
-						error instanceof Error
-							? `"${error.message} ${error.stack}"`
-							: 'Unknown Error'
-					)
-				); // Captura errores y los muestra.
-			}
-		},
-		[setValue, setOutput]
-	);
 
 	const editorProps: EditorProps = useMemo(
-		() => ({
-			defaultValue: value,
-			theme: theme,
-			defaultLanguage: editorLang,
-			options: editorOptions as EditorProps['options'],
-			onMount: handleEditorMount,
-			onChange: handleEditorChange,
-		}),
-		[value, editorLang, theme, handleEditorMount, handleEditorChange]
+		() =>
+			({
+				theme,
+				language: editorLang,
+				value,
+				setValue,
+				setOutput,
+			} as EditorProps),
+		[value, editorLang, theme]
 	);
 
 	const outputTabs: { [x: string]: JSX.Element } = {
@@ -149,85 +59,45 @@ export const App = () => {
 			/>
 		),
 		javascript: (
-			<Editor
-				defaultLanguage={'shell'}
-				value={output}
-				options={{
-					...(editorOptions as EditorProps['options']),
-					readOnly: true,
-				}}
-			/>
+			<Editor {...editorProps} language={'shell'} value={output} readOnly />
 		),
 		typescript: (
-			<Editor
-				defaultLanguage={'shell'}
-				value={output}
-				options={{
-					...(editorOptions as EditorProps['options']),
-					readOnly: true,
-				}}
-			/>
+			<Editor {...editorProps} language={'shell'} value={output} readOnly />
 		),
 	};
 
 	return (
 		<>
-			<header className='flex flex-row gap-3 items-center justify-between w-dvw h-10 px-2 py-1'>
-				<h1 className='text-lg text-neutral-400 font-bold'>
-					Web Sandbox
+			<Header className='flex flex-row gap-3 items-center justify-between w-dvw h-10 px-2 py-1 bg-zinc-900'>
+				<Header.Title
+					title='Web Sandbox'
+					className='text-lg text-neutral-400 font-bold'
+				>
 					<small className='text-xs text-gray-500 ms-2 self-baseline'>
 						with React & Monaco
 					</small>
-				</h1>
+				</Header.Title>
 				<menu className='flex flex-row gap-3 items-center'>
-					<label>
-						<span className='sr-only'>Language</span>
-						<select
-							name='language'
-							value={editorLang}
-							onChange={(e) =>
-								setEditorLang((prev) =>
-									prev !== e.target.value ? e.target.value : prev
-								)
-							}
-						>
-							{EDITOR_LANGUAGES.map((lang) => (
-								<option key={lang} value={lang}>
-									{lang}
-								</option>
-							))}
-						</select>
-					</label>
-
-					<label>
-						<span className='sr-only'>Theme</span>
-						<select
-							name='theme'
-							value={theme}
-							onChange={(e) =>
-								setTheme((prev) =>
-									prev !== e.target.value ? e.target.value : prev
-								)
-							}
-						>
-							{Object.entries({
-								light: 'vs-light',
-								'vs-dark': 'vs-dark',
-								'hc-black': 'hc-black',
-								...themelist,
-							}).map(([themeName, label]) => (
-								<option key={themeName} value={themeName}>
-									{label}
-								</option>
-							))}
-						</select>
-					</label>
+					<Header.Language
+						editorLang={editorLang}
+						setEditorLang={setEditorLang}
+					/>
+					<Header.Theme
+						theme={theme}
+						setTheme={setTheme}
+						themelist={themelist}
+					/>
 				</menu>
-			</header>
+			</Header>
 
 			<main className='flex flex-row w-dvw h-dvh'>
-				<Editor {...editorProps} />
-				{outputTabs[editorLang] ?? null}
+				<Splitter>
+					<Splitter.Panel>
+						<Editor {...editorProps} />
+					</Splitter.Panel>
+					<Splitter.Divider className='w-5 h-full cursor-col-resize bg-zinc-900 hover:bg-green-400' />
+					<Splitter.Panel>{outputTabs[editorLang] ?? null}</Splitter.Panel>
+				</Splitter>
 			</main>
 		</>
 	);
