@@ -1,0 +1,32 @@
+{
+	"selectOnLineNumbers": true,
+	"minimap": { "enabled": true },
+	"readOnly": false,
+	"indentSize": "tabSize",
+	"tabSize": 2,
+	"fontSize": 16,
+	"fontFamily": "'Monaspace Radon', 'Monaspace Krypton', 'Cascadia Code', Consolas, 'Courier New', monospace",
+	"inlineSuggest.fontFamily": "'Monaspace Krypton', default",
+	"renderWhitespace": "all",
+	"bracketPairColorization": {
+		"enabled": true,
+		"independentColorPoolPerBracketType": true
+	},
+	"guides": {
+		"bracketPairs": true,
+		"bracketPairsHorizontal": true
+	},
+	"inlayHints": {
+		"enabled": "on",
+		"fontFamily": "'Monaspace Krypton', 'Monaspace Radon', 'Cascadia Code', default"
+	},
+	"fontLigatures": "'calt', 'liga', 'dlig', 'ss01', 'ss02'",
+	"quickSuggestions": {
+		"other": true,
+		"comments": true,
+		"strings": true
+	},
+	"suggestOnTriggerCharacters": true,
+	"linkedEditing": true,
+	"cursorSmoothCaretAnimation": "on"
+}
